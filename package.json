@@ -3,7 +3,7 @@
   "version": "1.0.7",
   "description": "A Simple JS GraphQL Caching Client",
   "main": "lib/gql-cache-client.js",
-  "repository": "https://github.com/tianhai/gqlcacheclient",
+  "repository": "https://github.com/tianhai82/gqlcacheclient",
   "author": "tianhai",
   "license": "MIT",
   "private": false,
@@ -32,7 +32,9 @@
     "webpack": "^4.12.2",
     "webpack-cli": "^3.0.8",
     "webpack-node-externals": "^1.7.2",
-    "yargs": "^10.0.3"
+    "yargs": "^10.0.3",
+    "apollo-server": "^2.0.0",
+    "node-fetch": "^2.2.0"
   },
   "jest": {
     "modulePaths": [
@@ -56,8 +58,6 @@
     "testEnvironment": "node"
   },
   "dependencies": {
-    "apollo-server": "^2.0.0",
-    "graphql": "^0.13.2",
-    "node-fetch": "^2.2.0"
+    "graphql": "^0.13.2"
   }
 }
