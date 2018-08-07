@@ -44,7 +44,15 @@ const headers = {
   'Content-Type': 'application/graphql',
   credentials: 'same-origin',
 };
-const client = new GqlClient('https://api.graph.cool/simple/v1/movies',headers)
+const errHandler = (err) => {
+    if (err.response.status === 401){
+        // forward to login page
+        return true // when true is returned in the handler,
+        // error will not be rethrown to downstream catches.
+        // request promise will resolve with an empty data
+    }
+}
+const client = new GqlClient('https://api.graph.cool/simple/v1/movies',headers, errHandler)
 // if no header is provided, the default will be {'Content-Type': 'application/json; charset=utf-8'}
 
 const query = `query getMovie($title: String!) {
