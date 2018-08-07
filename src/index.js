@@ -88,6 +88,14 @@ function fetchQuery(endpoint, headers, operationName, query, variables) {
       variables,
     }),
   })
+    .then((response) => {
+      if (response.status >= 200 && response.status < 300) {
+        return Promise.resolve(response);
+      }
+      const error = new Error(response.statusText || response.status);
+      error.response = response;
+      return Promise.reject(error);
+    })
     .then(response => response.json())
     .then((data) => {
       if (data.errors && data.errors.length > 0) {
@@ -98,10 +106,11 @@ function fetchQuery(endpoint, headers, operationName, query, variables) {
 }
 
 export default class GqlClient {
-  constructor(endpoint, headers) {
+  constructor(endpoint, headers, errorHandler) {
     this.endpoint = endpoint;
     this.headers = headers;
     this.cache = new Map();
+    this.errorHandler = errorHandler;
   }
 
   request(query, variables, options) {
@@ -141,23 +150,33 @@ export default class GqlClient {
         return Promise.resolve(result);
       }
     }
-    return fetchQuery(
+    const promise = fetchQuery(
       this.endpoint,
       this.headers,
       queryDoc.definitions[0].name ? queryDoc.definitions[0].name.value : null,
       query,
       variables,
-    ).then((data) => {
-      if (
-        reqOptions.cache
-        && doc.operation.toLowerCase() === 'query'
-        && cacheKeys
-      ) {
-        cacheKeys.forEach((key) => {
-          this.cache.set(key.queryKey, data[key.alias]);
-        });
-      }
-      return Promise.resolve(data);
-    });
+    )
+      .then((data) => {
+        if (
+          reqOptions.cache
+          && doc.operation.toLowerCase() === 'query'
+          && cacheKeys
+        ) {
+          cacheKeys.forEach((key) => {
+            this.cache.set(key.queryKey, data[key.alias]);
+          });
+        }
+        return Promise.resolve(data);
+      });
+    if (this.errorHandler) {
+      return promise.catch((err) => {
+        const handled = this.errorHandler(err);
+        if (!handled) {
+          throw err;
+        }
+      });
+    }
+    return promise;
   }
 }
