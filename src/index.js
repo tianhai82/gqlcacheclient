@@ -14,9 +14,9 @@ function recurseFields(field, variables) {
         && arg.value.name
         && variables[arg.value.name.value]
       ) {
-        argKey += `=${variables[arg.value.name.value]}`;
+        argKey += `=${JSON.stringify(variables[arg.value.name.value])}`;
       } else if (arg.value.kind.toLowerCase() !== 'variable') {
-        argKey += `=${arg.value.value}`;
+        argKey += `=${JSON.stringify(arg.value.value)}`;
       }
       return argKey;
     });
@@ -92,14 +92,17 @@ function fetchQuery(endpoint, headers, operationName, query, variables) {
       if (response.status >= 200 && response.status < 300) {
         return Promise.resolve(response);
       }
-      const error = new Error(response.statusText || response.status);
-      error.response = response;
-      return Promise.reject(error);
+      return Promise.reject({
+        networkError: {
+          status: response.status,
+          statusText: response.statusText,
+        },
+      });
     })
     .then(response => response.json())
     .then((data) => {
       if (data.errors && data.errors.length > 0) {
-        return Promise.reject(data.errors);
+        return Promise.reject({ graphqlErrors: data.errors });
       }
       return Promise.resolve(data.data);
     });
@@ -171,10 +174,7 @@ export default class GqlClient {
       });
     if (this.errorHandler) {
       return promise.catch((err) => {
-        const handled = this.errorHandler(err);
-        if (!handled) {
-          throw err;
-        }
+        return this.errorHandler(err);
       });
     }
     return promise;

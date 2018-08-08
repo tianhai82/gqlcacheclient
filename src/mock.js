@@ -16,8 +16,13 @@ const typeDefs = gql`
         age: Int
         beauty: Int
     }
+    input PersonInput {
+        age: Int!
+        gender: String!
+    }
     type Query {
         people(gender: String): Person
+        peopleSpecific(input:PersonInput!): Person
     }
 `;
 // const mocks = {
@@ -39,6 +44,24 @@ const resolvers = {
           return {
             name: 'Ah Huat',
             age: 6,
+            beauty: 999,
+          };
+        default:
+          throw new Error("invalid argument received");
+      }
+    },
+    peopleSpecific: (parent, args, context, info) => {
+      switch (args.input.gender) {
+        case 'male':
+          return {
+            name: 'Ah Huat',
+            age: args.input.age,
+            power: 99,
+          };
+        case 'female':
+          return {
+            name: 'Ah Huat',
+            age: args.input.age,
             beauty: 999,
           };
         default:

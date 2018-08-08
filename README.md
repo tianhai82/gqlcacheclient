@@ -44,13 +44,17 @@ const headers = {
   'Content-Type': 'application/graphql',
   credentials: 'same-origin',
 };
+
+// errHandler allows you to handle errors before rethrowing the errors. If no error is rethrown,
+//   the request will resolve with the data returned from this errHandler.
+//   Otherwise, the request be able to catch the error rethrown
+//   Check for networkError or graphqlError in the (err) parameter
 const errHandler = (err) => {
-    if (err.response.status === 401){
+    // check for networkError or graphqlError and handle them
+    if (err.networkError.status === 401){
         // forward to login page
-        return true // when true is returned in the handler,
-        // error will not be rethrown to downstream catches.
-        // request promise will resolve with an empty data
     }
+    throw err; //rethrow err
 }
 const client = new GqlClient('https://api.graph.cool/simple/v1/movies',headers, errHandler)
 // if no header is provided, the default will be {'Content-Type': 'application/json; charset=utf-8'}
@@ -76,8 +80,7 @@ const options = {
 client.request(query, variables, options)
   .then(data => console.log(data))
   .catch(err => {
-    console.log(err.response.errors) // GraphQL response errors
-    console.log(err.response.data) // Response data if available
+    console.log(err) // handle errors
   })
 ```
 
