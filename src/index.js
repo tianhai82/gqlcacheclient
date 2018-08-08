@@ -92,17 +92,17 @@ function fetchQuery(endpoint, headers, operationName, query, variables) {
       if (response.status >= 200 && response.status < 300) {
         return Promise.resolve(response);
       }
-      return Promise.reject({
+      return Promise.reject(new Error({
         networkError: {
           status: response.status,
           statusText: response.statusText,
         },
-      });
+      }));
     })
     .then(response => response.json())
     .then((data) => {
       if (data.errors && data.errors.length > 0) {
-        return Promise.reject({ graphqlErrors: data.errors });
+        return Promise.reject(new Error({ graphqlErrors: data.errors }));
       }
       return Promise.resolve(data.data);
     });
@@ -173,9 +173,7 @@ export default class GqlClient {
         return Promise.resolve(data);
       });
     if (this.errorHandler) {
-      return promise.catch((err) => {
-        return this.errorHandler(err);
-      });
+      return promise.catch(err => this.errorHandler(err));
     }
     return promise;
   }
