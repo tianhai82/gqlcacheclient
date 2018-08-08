@@ -1,6 +1,6 @@
 {
   "name": "gqlcacheclient",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "A Simple JS GraphQL Caching Client",
   "main": "lib/gql-cache-client.js",
   "repository": "https://github.com/tianhai82/gqlcacheclient",
