@@ -1,4 +1,5 @@
 import { parse } from 'graphql';
+import { print } from 'graphql/language/printer';
 
 function recurseFields(field, variables) {
   if (field.kind.toLowerCase() === 'field') {
@@ -92,17 +93,19 @@ function fetchQuery(endpoint, headers, operationName, query, variables) {
       if (response.status >= 200 && response.status < 300) {
         return Promise.resolve(response);
       }
-      return Promise.reject(new Error({
+      // eslint-disable-next-line prefer-promise-reject-errors
+      return Promise.reject({
         networkError: {
           status: response.status,
           statusText: response.statusText,
         },
-      }));
+      });
     })
     .then(response => response.json())
     .then((data) => {
       if (data.errors && data.errors.length > 0) {
-        return Promise.reject(new Error({ graphqlErrors: data.errors }));
+        // eslint-disable-next-line prefer-promise-reject-errors
+        return Promise.reject({ graphqlErrors: data.errors });
       }
       return Promise.resolve(data.data);
     });
@@ -124,13 +127,21 @@ export default class GqlClient {
       reqOptions = { ...reqOptions, ...options };
     }
     let queryDoc;
-    try {
-      queryDoc = parse(query);
-      if (queryDoc.definitions.length > 1) {
-        return Promise.reject(new Error('Multiple operations not supported'));
+    let isDoc = false;
+    if (typeof query === 'object' && query.kind && typeof query.kind === 'string' && query.kind.toLowerCase() === 'document') {
+      isDoc = true;
+    }
+    if (!isDoc) {
+      try {
+        queryDoc = parse(query);
+        if (queryDoc.definitions.length > 1) {
+          return Promise.reject(new Error('Multiple operations not supported'));
+        }
+      } catch (e) {
+        return Promise.reject(e);
       }
-    } catch (e) {
-      return Promise.reject(e);
+    } else {
+      queryDoc = query;
     }
     const doc = queryDoc.definitions[0];
     let cacheKeys;
@@ -157,7 +168,7 @@ export default class GqlClient {
       this.endpoint,
       this.headers,
       queryDoc.definitions[0].name ? queryDoc.definitions[0].name.value : null,
-      query,
+      print(queryDoc),
       variables,
     )
       .then((data) => {
